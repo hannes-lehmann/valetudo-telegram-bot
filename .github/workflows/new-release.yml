@@ -1,0 +1,16 @@
+name: New release
+concurrency: 
+  cancel-in-progress: true
+  group: new-release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push-docker-image:
+    uses: ./.github/workflows/build-and-push-docker-image.yml
+    secrets: inherit
+  build-and-publish-release:
+    uses: ./.github/workflows/build-and-publish-release.yml
+    permissions: write-all
+    secrets: inherit

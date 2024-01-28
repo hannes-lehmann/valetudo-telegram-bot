@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="800px"
+   height="800px"
+   viewBox="0 0 24 24"
+   fill="none"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="vacuum.svg"
+   inkscape:export-filename="vacuum.png"
+   inkscape:export-xdpi="3"
+   inkscape:export-ydpi="3"
+   inkscape:version="1.3.1 (91b66b0783, 2023-11-16)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.3665625"
+     inkscape:cx="1031.202"
+     inkscape:cy="440.57971"
+     inkscape:window-width="1350"
+     inkscape:window-height="1237"
+     inkscape:window-x="2748"
+     inkscape:window-y="224"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg5" />
+  <path
+     d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+     stroke="#1C274C"
+     stroke-width="1.5"
+     id="path1"
+     style="fill:#ffffff;fill-opacity:1" />
+  <path
+     d="M15 9C15 10.6569 13.6569 12 12 12C10.3431 12 9 10.6569 9 9C9 7.34315 10.3431 6 12 6C13.6569 6 15 7.34315 15 9Z"
+     stroke="#1C274C"
+     stroke-width="1.5"
+     id="path2" />
+  <path
+     d="M12 18V16"
+     stroke="#1C274C"
+     stroke-width="1.5"
+     stroke-linecap="round"
+     id="path3" />
+  <path
+     d="M2 22L4.5 19.5"
+     stroke="#1C274C"
+     stroke-width="1.5"
+     stroke-linecap="round"
+     id="path4" />
+  <path
+     d="M22 22L19.5 19.5"
+     stroke="#1C274C"
+     stroke-width="1.5"
+     stroke-linecap="round"
+     id="path5" />
+</svg>
