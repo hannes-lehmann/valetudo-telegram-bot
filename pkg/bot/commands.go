@@ -10,28 +10,62 @@ import (
 )
 
 func (bot *Bot) publishMyCommands() error {
+	baseCommands := []tgbotapi.BotCommand{
+		{
+			Command:     "clean",
+			Description: "Clean everything or a specific room",
+		},
+		{
+			Command:     "pause",
+			Description: "Pause the robot",
+		},
+		{
+			Command:     "stop",
+			Description: "Stop the robot",
+		},
+		{
+			Command:     "home",
+			Description: "Make robot go home",
+		},
+		{
+			Command:     "status",
+			Description: "Get current status",
+		},
+	}
+
+	if bot.HasCapability("OperationModeControlCapability") {
+		baseCommands = append(
+			baseCommands,
+			tgbotapi.BotCommand{
+				Command:     "mode",
+				Description: "Set operation mode",
+			},
+		)
+	}
+
+	if bot.HasCapability("FanSpeedControlCapability") {
+		baseCommands = append(
+			baseCommands,
+			tgbotapi.BotCommand{
+				Command:     "fan",
+				Description: "Set fan speed",
+			},
+		)
+	}
+
+	if bot.HasCapability("WaterUsageControlCapability") {
+		baseCommands = append(
+			baseCommands,
+			tgbotapi.BotCommand{
+				Command:     "water",
+				Description: "Set water grade",
+			},
+		)
+	}
+
 	_, err := bot.telegramApi.Request(
 		tgbotapi.NewSetMyCommands(
-			tgbotapi.BotCommand{
-				Command:     "clean",
-				Description: "Clean everything or a specific room",
-			},
-			tgbotapi.BotCommand{
-				Command:     "pause",
-				Description: "Pause the robot",
-			},
-			tgbotapi.BotCommand{
-				Command:     "stop",
-				Description: "Stop the robot",
-			},
-			tgbotapi.BotCommand{
-				Command:     "home",
-				Description: "Make robot go home",
-			},
-			tgbotapi.BotCommand{
-				Command:     "status",
-				Description: "Get current status",
-			},
+			baseCommands...,
 		),
 	)
 
@@ -219,4 +253,118 @@ func (bot *Bot) handleStatusCommand(requesterId int64, args string) error {
 	}
 
 	return nil
+}
+
+func (bot *Bot) handleModeCommand(requesterId int64, args string) error {
+	if args == "" {
+		return bot.sendModeKeyboard(requesterId)
+	}
+
+	err := bot.robotApi.SetOperationModeControlCapabilityPreset(args)
+	if err != nil {
+		return err
+	}
+
+	bot.telegramApi.Send(tgbotapi.NewMessage(requesterId, "✅ Mode set to "+localizeOperationMode(args)))
+
+	return nil
+}
+
+func (bot *Bot) sendModeKeyboard(requesterId int64) error {
+	modes, err := bot.robotApi.GetOperationModeControlCapabilityPresets()
+
+	if err != nil {
+		return err
+	}
+
+	msg := tgbotapi.NewMessage(requesterId, "⚙️ Set Mode to:")
+
+	keyboard := [][]tgbotapi.InlineKeyboardButton{}
+	for _, mode := range *modes {
+		keyboard = append(keyboard, tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(operationModeEmoji(mode)+" "+localizeOperationMode(mode), "mode "+mode),
+		))
+	}
+
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(keyboard...)
+
+	_, err = bot.telegramApi.Send(msg)
+
+	return err
+}
+
+func (bot *Bot) handleFanCommand(requesterId int64, args string) error {
+	if args == "" {
+		return bot.sendFanKeyboard(requesterId)
+	}
+
+	err := bot.robotApi.SetFanSpeedControlCapabilityPreset(args)
+	if err != nil {
+		return err
+	}
+
+	bot.telegramApi.Send(tgbotapi.NewMessage(requesterId, "✅ Fan speed set to "+localizeFanSpeed(args)))
+
+	return nil
+}
+
+func (bot *Bot) sendFanKeyboard(requesterId int64) error {
+	fans, err := bot.robotApi.GetFanSpeedControlCapabilityPresets()
+
+	if err != nil {
+		return err
+	}
+
+	msg := tgbotapi.NewMessage(requesterId, "🌀 Set Fan speed to:")
+
+	keyboard := [][]tgbotapi.InlineKeyboardButton{}
+	for _, fan := range *fans {
+		keyboard = append(keyboard, tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(localizeFanSpeed(fan), "fan "+fan),
+		))
+	}
+
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(keyboard...)
+
+	_, err = bot.telegramApi.Send(msg)
+
+	return err
+}
+
+func (bot *Bot) handleWaterCommand(requesterId int64, args string) error {
+	if args == "" {
+		return bot.sendWaterKeyboard(requesterId)
+	}
+
+	err := bot.robotApi.SetWaterUsageControlCapabilityPreset(args)
+	if err != nil {
+		return err
+	}
+
+	bot.telegramApi.Send(tgbotapi.NewMessage(requesterId, "✅ Water grade set to "+localizeWaterGrade(args)))
+
+	return nil
+}
+
+func (bot *Bot) sendWaterKeyboard(requesterId int64) error {
+	waters, err := bot.robotApi.GetWaterUsageControlCapabilityPresets()
+
+	if err != nil {
+		return err
+	}
+
+	msg := tgbotapi.NewMessage(requesterId, "💧 Set Water usage level to:")
+
+	keyboard := [][]tgbotapi.InlineKeyboardButton{}
+	for _, water := range *waters {
+		keyboard = append(keyboard, tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(localizeWaterGrade(water), "water "+water),
+		))
+	}
+
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(keyboard...)
+
+	_, err = bot.telegramApi.Send(msg)
+
+	return err
 }

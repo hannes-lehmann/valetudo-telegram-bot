@@ -68,6 +68,19 @@ func localizeOperationMode(mode string) string {
 	return mode
 }
 
+func operationModeEmoji(mode string) string {
+	switch mode {
+	case "vacuum":
+		return "🧹"
+	case "mop":
+		return "💧"
+	case "vacuum_and_mop":
+		return "🧹+💧"
+	}
+
+	return mode
+}
+
 func localizeFanSpeed(speed string) string {
 	switch speed {
 	case "low":

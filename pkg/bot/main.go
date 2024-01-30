@@ -13,6 +13,9 @@ type Bot struct {
 	robotApi    *valetudo.ValetudoClient
 	telegramApi *tgbotapi.BotAPI
 	chatIds     []int64
+
+	/** capabilities supported by the robot */
+	capabilities []string
 }
 
 func NewBot(robotApi *valetudo.ValetudoClient, telegramApi *tgbotapi.BotAPI) Bot {
@@ -24,10 +27,18 @@ func (bot *Bot) AddUserId(id int64) {
 }
 
 func (bot *Bot) Start() error {
-	err := bot.publishMyCommands()
+	capabilities, err := bot.robotApi.GetRobotCapabilities()
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get robot capabilities: %w", err)
+	}
+
+	bot.capabilities = *capabilities
+
+	err = bot.publishMyCommands()
+
+	if err != nil {
+		return fmt.Errorf("failed to publish commands: %w", err)
 	}
 
 	go func() {
@@ -157,6 +168,7 @@ func (bot *Bot) listenToMessages() error {
 						log.Println(err)
 					}
 				}
+
 			case "stop":
 				err := bot.robotApi.Stop()
 				if err != nil {
@@ -168,6 +180,7 @@ func (bot *Bot) listenToMessages() error {
 						log.Println(err)
 					}
 				}
+
 			case "home":
 				err := bot.robotApi.Home()
 				if err != nil {
@@ -179,6 +192,40 @@ func (bot *Bot) listenToMessages() error {
 						log.Println(err)
 					}
 				}
+
+			case "mode":
+				bot.handleOneTimeCallback(update.CallbackQuery, data[1:], func(query *tgbotapi.CallbackQuery, args []string) (string, error) {
+					target := args[0]
+					err := bot.robotApi.SetOperationModeControlCapabilityPreset(target)
+					if err != nil {
+						return "", err
+					}
+
+					return "✔️ Mode set to " + localizeOperationMode(target), nil
+				})
+
+			case "fan":
+				bot.handleOneTimeCallback(update.CallbackQuery, data[1:], func(query *tgbotapi.CallbackQuery, args []string) (string, error) {
+					targetSpeed := args[0]
+					err := bot.robotApi.SetFanSpeedControlCapabilityPreset(targetSpeed)
+					if err != nil {
+						return "", err
+					}
+
+					return "✔️ Fan speed set to " + localizeFanSpeed(targetSpeed), nil
+				})
+
+			case "water":
+				bot.handleOneTimeCallback(update.CallbackQuery, data[1:], func(query *tgbotapi.CallbackQuery, args []string) (string, error) {
+					target := args[0]
+					err := bot.robotApi.SetWaterUsageControlCapabilityPreset(target)
+					if err != nil {
+						return "", err
+					}
+
+					return "✔️ Water usage set to " + localizeWaterGrade(target), nil
+				})
+
 			case "clean":
 				if len(data) < 2 {
 					bot.handleCleanCommand(update.CallbackQuery.Message.Chat.ID, "")
@@ -196,16 +243,30 @@ func (bot *Bot) listenToMessages() error {
 					bot.Send(update.CallbackQuery.Message.Chat.ID, "❌ Error cleaning room: "+err.Error())
 					log.Println(err)
 				} else {
-					// TODO: Maybe clean the keyboard?
-					//bot.telegramApi.Request(
-					//	tgbotapi.NewEditMessageReplyMarkup(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}}),
-					//)
+					roomName := data[1]
+					rooms, err := bot.getRooms()
 
-					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "🧹 Cleaning")
-
-					if _, err := bot.telegramApi.Request(callback); err != nil {
+					if err == nil {
+						for _, room := range *rooms {
+							if *room.Metadata.SegmentId == data[1] {
+								roomName = *room.Metadata.Name
+								break
+							}
+						}
+					} else {
 						log.Println(err)
 					}
+
+					bot.telegramApi.Request(
+						tgbotapi.EditMessageTextConfig{
+							BaseEdit: tgbotapi.BaseEdit{
+								ChatID:      update.CallbackQuery.Message.Chat.ID,
+								MessageID:   update.CallbackQuery.Message.MessageID,
+								ReplyMarkup: nil,
+							},
+							Text: "🧹 Cleaning " + roomName,
+						},
+					)
 				}
 			}
 
@@ -259,8 +320,36 @@ func (bot *Bot) listenToMessages() error {
 				log.Println(err)
 				bot.Send(update.Message.Chat.ID, "❌ Error cleaning: "+err.Error())
 			}
+		case "mode":
+			err := bot.handleModeCommand(update.Message.Chat.ID, update.Message.CommandArguments())
+			if err != nil {
+				log.Println(err)
+				bot.Send(update.Message.Chat.ID, "❌ Error setting mode: "+err.Error())
+			}
+		case "fan":
+			err := bot.handleFanCommand(update.Message.Chat.ID, update.Message.CommandArguments())
+			if err != nil {
+				log.Println(err)
+				bot.Send(update.Message.Chat.ID, "❌ Error setting fan speed: "+err.Error())
+			}
+		case "water":
+			err := bot.handleWaterCommand(update.Message.Chat.ID, update.Message.CommandArguments())
+			if err != nil {
+				log.Println(err)
+				bot.Send(update.Message.Chat.ID, "❌ Error setting water grade: "+err.Error())
+			}
 		}
 	}
 
 	return nil
+}
+
+func (bot *Bot) HasCapability(capability string) bool {
+	for _, cap := range bot.capabilities {
+		if cap == capability {
+			return true
+		}
+	}
+
+	return false
 }

@@ -82,3 +82,7 @@ type MapSegmentationCapabilityPutRequest struct {
 type BasicControlCapabilityRequest struct {
 	Action string `json:"action"`
 }
+
+type PutRobotCapabilityPresetRequest struct {
+	Name string `json:"name"`
+}

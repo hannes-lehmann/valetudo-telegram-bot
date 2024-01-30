@@ -106,3 +106,26 @@ func (bot *Bot) Send(receiverId int64, message string) error {
 
 	return err
 }
+
+func (bot *Bot) handleOneTimeCallback(query *tgbotapi.CallbackQuery, args []string, inner func(*tgbotapi.CallbackQuery, []string) (string, error)) error {
+	response, err := inner(query, args)
+
+	if err != nil {
+		bot.Send(query.Message.Chat.ID, "⚠️ Error: "+err.Error())
+		return err
+	}
+
+	// update message and clear keyboard
+	_, err = bot.telegramApi.Request(
+		tgbotapi.EditMessageTextConfig{
+			BaseEdit: tgbotapi.BaseEdit{
+				ChatID:      query.Message.Chat.ID,
+				MessageID:   query.Message.MessageID,
+				ReplyMarkup: nil,
+			},
+			Text: response,
+		},
+	)
+
+	return err
+}
