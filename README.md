@@ -21,8 +21,7 @@ You'll need to have your own bot. Follow this official guide to obtain your bot 
 Download [latest release](https://github.com/SkaceKamen/valetudo-telegram-bot/releases) for your target platform, then copy `.env.example` from this repo into `.env` and fill in the values.
 
 #### Using docker
-
-The image is [skacekamen/valetudo-telegram-bot](https://hub.docker.com/repository/docker/skacekamen/valetudo-telegram-bot/general), it should supports ARM64, ARM64 and ARM. The configuration is provided by environment variables.
+The image is [skacekamen/valetudo-telegram-bot](https://hub.docker.com/r/skacekamen/valetudo-telegram-bot), it should supports ARM64, ARM64 and ARM. The configuration is provided by environment variables.
 
 ```
 services:
