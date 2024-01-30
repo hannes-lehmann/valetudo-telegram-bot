@@ -18,7 +18,7 @@ You'll need to have your own bot. Follow this official guide to obtain your bot 
 
 #### Without docker
 
-Download latest release for your target platform, then copy `.env.example` from this repo into `.env` and fill in the values.
+Download [latest release](https://github.com/SkaceKamen/valetudo-telegram-bot/releases) for your target platform, then copy `.env.example` from this repo into `.env` and fill in the values.
 
 #### Using docker
 
