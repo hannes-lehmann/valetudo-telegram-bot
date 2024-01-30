@@ -191,11 +191,18 @@ func (bot *Bot) listenToMessages() error {
 				}
 
 				err := bot.robotApi.CleanMapSegments([]string{data[1]}, 1)
+
 				if err != nil {
 					bot.Send(update.CallbackQuery.Message.Chat.ID, "❌ Error cleaning room: "+err.Error())
 					log.Println(err)
 				} else {
+					// TODO: Maybe clean the keyboard?
+					//bot.telegramApi.Request(
+					//	tgbotapi.NewEditMessageReplyMarkup(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}}),
+					//)
+
 					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "🧹 Cleaning")
+
 					if _, err := bot.telegramApi.Request(callback); err != nil {
 						log.Println(err)
 					}

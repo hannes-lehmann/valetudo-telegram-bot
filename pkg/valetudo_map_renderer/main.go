@@ -1,4 +1,4 @@
-package bot
+package valetudo_map_renderer
 
 import (
 	"bytes"
@@ -30,17 +30,23 @@ func getLayerOrder(layer valetudo.RobotStateMapLayer) int {
 }
 
 func getEntityOrder(entity valetudo.RobotStateMapEntity) int {
-	if entity.Type == "charger_location" {
+	if entity.Type == "path" {
+		return 0
+	}
+	if entity.Type == "predicted_path" {
 		return 1
 	}
-	if entity.Type == "robot_position" {
+	if entity.Type == "charger_location" {
 		return 2
 	}
+	if entity.Type == "robot_position" {
+		return 3
+	}
 
-	return 3
+	return 4
 }
 
-func renderMap(mapData *valetudo.RobotStateMap) []byte {
+func RenderMap(mapData *valetudo.RobotStateMap) []byte {
 	if vacuumImage == nil {
 		img, _, err := image.Decode(bytes.NewReader(assets.VacuumImage))
 		if err != nil {
@@ -85,6 +91,22 @@ func renderMap(mapData *valetudo.RobotStateMap) []byte {
 		}
 	}
 
+	if minX == w {
+		minX = 0
+	}
+
+	if minY == h {
+		minY = 0
+	}
+
+	if maxX == 0 {
+		maxX = w
+	}
+
+	if maxY == 0 {
+		maxY = h
+	}
+
 	minX -= int(float64(w) * 0.01)
 	minY -= int(float64(h) * 0.01)
 	maxX += int(float64(h) * 0.01)
@@ -103,31 +125,23 @@ func renderMap(mapData *valetudo.RobotStateMap) []byte {
 	})
 
 	for _, layer := range mapData.Layers {
+		// Only continue with supported layers
+		if layer.Type != "wall" && layer.Type != "floor" && layer.Type != "segment" {
+			continue
+		}
+
+		layerColor := color.RGBA{0, 0, 0, 255}
 		if layer.Type == "wall" {
-			renderLayer(ctx, layer, minX, minY, color.RGBA{0, 0, 0, 255}, scale)
+			layerColor = color.RGBA{0, 0, 0, 255}
 		}
 		if layer.Type == "floor" {
-			renderLayer(ctx, layer, minX, minY, color.RGBA{200, 200, 200, 255}, scale)
+			layerColor = color.RGBA{200, 200, 200, 255}
 		}
 		if layer.Type == "segment" {
-			renderLayer(ctx, layer, minX, minY, color.RGBA{128, 128, 128, 255}, scale)
+			layerColor = color.RGBA{128, 128, 128, 255}
 		}
 
-		if layer.Dimensions.X.Min < minX {
-			minX = layer.Dimensions.X.Min
-		}
-
-		if layer.Dimensions.X.Max > maxX {
-			maxX = layer.Dimensions.X.Max
-		}
-
-		if layer.Dimensions.Y.Min < minY {
-			minY = layer.Dimensions.Y.Min
-		}
-
-		if layer.Dimensions.Y.Max > maxY {
-			maxY = layer.Dimensions.Y.Max
-		}
+		renderLayer(ctx, layer, minX, minY, layerColor, scale)
 	}
 
 	sort.Slice(mapData.Entities, func(i, j int) bool {
@@ -155,6 +169,27 @@ func renderMap(mapData *valetudo.RobotStateMap) []byte {
 			ctx.DrawImageAnchored(*vacuumImage, int(x), int(y), 0.5, 0.5)
 			ctx.Pop()
 		}
+
+		if entity.Type == "path" || entity.Type == "predicted_path" {
+			if entity.Points != nil && len(*entity.Points) > 0 {
+				if entity.Type == "path" {
+					ctx.SetColor(color.RGBA{100, 100, 100, 255})
+				} else {
+					ctx.SetColor(color.RGBA{100, 100, 100, 100})
+				}
+				ctx.SetLineWidth(2)
+				ctx.MoveTo(x, y)
+
+				for i := 2; i < len(*entity.Points); i += 2 {
+					ctx.LineTo(
+						((float64((*entity.Points)[i])/float64(mapData.PixelSize))-float64(minX))*scale,
+						((float64((*entity.Points)[i+1])/float64(mapData.PixelSize))-float64(minY))*scale,
+					)
+				}
+
+				ctx.Stroke()
+			}
+		}
 	}
 
 	ctx.Scale(3, 3)
@@ -168,6 +203,13 @@ func renderMap(mapData *valetudo.RobotStateMap) []byte {
 
 func renderLayer(ctx *gg.Context, layer valetudo.RobotStateMapLayer, xOffset int, yOffset int, color color.Color, scale float64) {
 	ctx.SetColor(color)
+
+	for i := 0; i < len(layer.Pixels); i += 2 {
+		x := layer.Pixels[i]
+		y := layer.Pixels[i+1]
+		ctx.DrawRectangle(float64(x-xOffset)*scale, float64(y-yOffset)*scale, scale, scale)
+		ctx.Fill()
+	}
 
 	for i := 0; i < len(layer.CompressedPixels); i += 3 {
 		xStart := layer.CompressedPixels[i]

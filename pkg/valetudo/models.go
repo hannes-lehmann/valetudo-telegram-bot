@@ -44,6 +44,7 @@ type RobotStateMapLayer struct {
 	Type             string                       `json:"type"`
 	Metadata         RobotStateMapLayerMetadata   `json:"metaData"`
 	Dimensions       RobotStateMapLayerDimensions `json:"dimensions"`
+	Pixels           []int                        `json:"pixels"`
 	CompressedPixels []int                        `json:"compressedPixels"`
 }
 

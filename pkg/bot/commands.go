@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SkaceKamen/valetudo-telegram-bot/pkg/valetudo_map_renderer"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -34,7 +35,11 @@ func (bot *Bot) publishMyCommands() error {
 		),
 	)
 
-	return fmt.Errorf("failed to set my commands: %w", err)
+	if err != nil {
+		return fmt.Errorf("failed to set my commands: %w", err)
+	}
+
+	return err
 }
 
 func (bot *Bot) handleCleanCommand(requesterId int64, args string) error {
@@ -197,7 +202,7 @@ func (bot *Bot) handleStatusCommand(requesterId int64, args string) error {
 		return err
 	}
 
-	mapImage := renderMap(&fullState.Map)
+	mapImage := valetudo_map_renderer.RenderMap(&fullState.Map)
 	mapMsg := tgbotapi.NewPhoto(requesterId, tgbotapi.FileBytes{
 		Name:  "map.png",
 		Bytes: mapImage,
